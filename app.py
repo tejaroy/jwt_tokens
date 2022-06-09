@@ -28,7 +28,7 @@ def token_required(f):
 		try:
 			payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
 			current_user = User.query\
-				.filter_by(public_id = payload['public_id'])\
+				.filter_by(id = payload['id'])\
 				.first()
 		except Exception as e :
 			return jsonify({
@@ -76,11 +76,10 @@ def login():
 
 	if check_password_hash(user.password, auth.get('password')):
 		token = jwt.encode({
-			'public_id': user.public_id,
+			'id': user.id,
 			'exp' : datetime.utcnow() + timedelta(minutes = 15)
 		},app.config['SECRET_KEY'])
 		refresh_token=jwt.encode({
-			"public_id":user.public_id,
 			"id":user.id,
 			"exp":datetime.utcnow()+timedelta(minutes=30)
 		},app.config['SECRET_KEY'])
@@ -118,6 +117,47 @@ def signup():
 		return make_response('Successfully registered.', 201)
 	else:
 		return make_response('User already exists. Please Log in.', 202)
+
+@app.route('/refresh',methods=['POST'])
+def refresh():
+	data = request.form
+
+	if not data or not data.get('id'):
+		return make_response(
+			'Could not verify',
+			401,
+			{'WWW-Authenticate': 'Basic realm ="Login required !!"'}
+		)
+
+	user = User.query \
+		.filter_by(id=data.get('id')) \
+		.first()
+
+	if not user:
+		return make_response(
+			'Could not verify',
+			401,
+			{'WWW-Authenticate': 'Basic realm ="User does not exist !!"'}
+		)
+
+	if data.get('id'):
+		token = jwt.encode({
+			"id":user.id,
+			'exp': datetime.utcnow() + timedelta(minutes=30)
+		}, app.config['SECRET_KEY'])
+		refresh_token = jwt.encode({
+			"id": user.id,
+			"exp": datetime.utcnow() + timedelta(minutes=60)
+		}, app.config['SECRET_KEY'])
+		return make_response(jsonify({
+			"token": token}, {
+			"refresh_token": refresh_token
+		}))
+	return make_response(
+		'Could not verify',
+		403,
+		{'WWW-Authenticate': 'Basic realm ="Wrong Password !!"'}
+	)
 
 if __name__ == "__main__":
 	app.run(debug = True)
