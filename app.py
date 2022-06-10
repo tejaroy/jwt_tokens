@@ -118,20 +118,22 @@ def signup():
 	else:
 		return make_response('User already exists. Please Log in.', 202)
 
+
 @app.route('/refresh',methods=['POST'])
 def refresh():
 	data = request.form
-
-	if not data or not data.get('id'):
+	if not data or not data.get('refresh_token'):
 		return make_response(
 			'Could not verify',
 			401,
 			{'WWW-Authenticate': 'Basic realm ="Login required !!"'}
 		)
-
+	jwt_data = jwt.decode(data.get('refresh_token'), options={"verify_signature": False})
 	user = User.query \
-		.filter_by(id=data.get('id')) \
+		.filter_by(id=jwt_data['id']) \
 		.first()
+	print(user.id)
+	print(jwt_data['id'])
 
 	if not user:
 		return make_response(
@@ -139,8 +141,7 @@ def refresh():
 			401,
 			{'WWW-Authenticate': 'Basic realm ="User does not exist !!"'}
 		)
-
-	if data.get('id'):
+	if user:
 		token = jwt.encode({
 			"id":user.id,
 			'exp': datetime.utcnow() + timedelta(minutes=30)
