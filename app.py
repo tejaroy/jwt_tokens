@@ -77,6 +77,8 @@ def login():
 	if check_password_hash(user.password, auth.get('password')):
 		token = jwt.encode({
 			'id': user.id,
+			"name":user.name,
+			"email":user.email,
 			'exp' : datetime.utcnow() + timedelta(minutes = 15)
 		},app.config['SECRET_KEY'])
 		refresh_token=jwt.encode({
@@ -144,6 +146,8 @@ def refresh():
 	if user:
 		token = jwt.encode({
 			"id":user.id,
+			"name":user.name,
+			"email":user.email,
 			'exp': datetime.utcnow() + timedelta(minutes=30)
 		}, app.config['SECRET_KEY'])
 		refresh_token = jwt.encode({
