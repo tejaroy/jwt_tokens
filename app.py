@@ -79,11 +79,11 @@ def login():
 			'id': user.id,
 			"name":user.name,
 			"email":user.email,
-			'exp' : datetime.utcnow() + timedelta(minutes = 15)
+			'exp' : datetime.utcnow() + timedelta(minutes = 1)
 		},app.config['SECRET_KEY'])
 		refresh_token=jwt.encode({
 			"id":user.id,
-			"exp":datetime.utcnow()+timedelta(minutes=30)
+			"exp":datetime.utcnow()+timedelta(minutes= 2)
 		},app.config['SECRET_KEY'])
 		return make_response(jsonify({
 			"token":token},{
